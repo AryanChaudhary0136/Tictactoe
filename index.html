@@ -1,182 +1,426 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Tic-Tac-Toe</title>
+    <title>Ultimate Tic Tac Toe</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --light-bg: #f0f2f5;
-            --light-card-bg: #ffffff;
-            --light-text: #333;
-            --light-border: #ddd;
-            --light-hover: #e9e9e9;
-            --dark-bg: #1a1a2e;
-            --dark-card-bg: #16213e;
-            --dark-text: #e0e0e0;
-            --dark-border: #0f3460;
-            --dark-hover: #2a3a5a;
-            --x-color: #ff47ab;
-            --o-color: #00e0ff;
-            --winner-glow: #e94560;
+            --shadow-color: rgba(0,0,0,0.1);
+            --bg-gradient-dark: linear-gradient(45deg, #2a343a, #1a2226, #12181B, #1a2226);
+            --bg-gradient-neon: linear-gradient(45deg, #3d007a, #1a0033, #0c001f, #3d007a);
         }
-
         [data-theme="dark"] {
-            --bg-color: var(--dark-bg);
-            --card-bg-color: var(--dark-card-bg);
-            --text-color: var(--dark-text);
-            --border-color: var(--dark-border);
-            --hover-color: var(--dark-hover);
+            --bg-color: #12181B; --card-color: #1a2226; --text-color: #e0e0e0; --border-color: #2a343a;
+            --x-color: #00e0ff; --o-color: #ff47ab; --glow-x: 0 0 15px rgba(0, 224, 255, 0.7);
+            --glow-o: 0 0 15px rgba(255, 71, 171, 0.7); --bg-gradient: var(--bg-gradient-dark);
+            --container-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        [data-theme="neon"] {
+            --bg-color: #0c001f; --card-color: #1a0033; --text-color: #f0f0f0; --border-color: #3d007a;
+            --x-color: #00ff9d; --o-color: #ff00ff; --glow-x: 0 0 15px rgba(0, 255, 157, 0.7);
+            --glow-o: 0 0 15px rgba(255, 0, 255, 0.7); --bg-gradient: var(--bg-gradient-neon);
+            --container-shadow: 0 0 25px rgba(255, 0, 255, 0.3);
         }
 
-        [data-theme="light"] {
-            --bg-color: var(--light-bg);
-            --card-bg-color: var(--light-card-bg);
-            --text-color: var(--light-text);
-            --border-color: var(--light-border);
-            --hover-color: var(--light-hover);
-        }
-
+        *, *::before, *::after { box-sizing: border-box; }
+        html { transition: background 0.5s; }
         body {
-            font-family: 'Poppins', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; min-height: 100vh; margin: 0; color: var(--text-color); background: var(--bg-gradient);
+            background-size: 400% 400%; animation: gradientPulse 20s ease infinite;
         }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
+        @keyframes gradientPulse { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .hidden { display: none !important; }
 
-        .start-menu, .game-container {
-            background-color: var(--card-bg-color);
-            color: var(--text-color);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            text-align: center;
-            width: 90%;
-            max-width: 450px;
+        /* --- Ad Loader & Splash Screens --- */
+        .pre-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000;
+            opacity: 1; transition: opacity 0.5s ease;
         }
-
-        .start-menu h1 {
-            font-size: 2.5em;
-            color: var(--x-color);
+        .ad-space { /* Your ad container */
             margin-bottom: 20px;
+            /* Aap ad ke hisaab se iski height/width set kar sakte hain */
         }
-
-        .start-menu input {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Poppins', sans-serif;
+        .progress-bar { width: 80%; max-width: 300px; height: 5px; background: #333; border-radius: 5px; overflow: hidden; }
+        .progress-bar-inner { width: 0; height: 100%; background: var(--x-color); transition: width 5s linear; }
+        .loading-text { margin-top: 15px; font-size: 1rem; color: #888; }
+        
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000;
+            display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 1; transition: opacity 0.5s ease;
         }
-
-        .start-menu .button {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin-top: 10px;
-            border-radius: 10px;
-            border: none;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .splash-grid { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
+        .splash-cell {
+            width: 80px; height: 80px; border: 3px solid #333; border-radius: 10px; display: flex;
+            justify-content: center; align-items: center; font-size: 3rem; font-weight: 700;
         }
+        .splash-cell span { opacity: 0; transform: scale(0.5); }
+        #splash-x1 { animation: splash-appear 0.5s forwards 0.5s; color: var(--x-color); }
+        #splash-o1 { animation: splash-appear 0.5s forwards 1.0s; color: var(--o-color); }
+        #splash-x2 { animation: splash-appear 0.5s forwards 1.5s; color: var(--x-color); }
+        #splash-o2 { animation: splash-appear 0.5s forwards 2.0s; color: var(--o-color); }
+        #splash-x3 { animation: splash-appear 0.5s forwards 2.5s; color: var(--x-color); }
+        .splash-cell.win-splash { animation: splash-win 0.5s forwards 3s; }
+        @keyframes splash-appear { to { opacity: 1; transform: scale(1); } }
+        @keyframes splash-win { to { background: var(--x-color); border-color: var(--x-color); } }
 
-        .start-menu .button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        .screen-container { width: 90%; max-width: 450px; }
+        .screen {
+            background-color: var(--card-color); padding: 2.5rem; border-radius: 20px;
+            box-shadow: var(--container-shadow); text-align: center; border: 1px solid var(--border-color);
+            transition: background-color 0.5s, box-shadow 0.5s, opacity 0.5s, transform 0.5s;
         }
-
-        .vs-friend { background: linear-gradient(45deg, var(--x-color), #e73c7e); color: white; }
-        .vs-cpu { background: linear-gradient(45deg, var(--o-color), #23a6d5); color: white; }
-
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
+        h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); margin: 0 0 1.5rem 0; color: var(--x-color); }
+        
+        /* --- Slider Start Menu --- */
+        #start-menu .mode-slider-container { position: relative; overflow: hidden; margin-bottom: 1.5rem; }
+        .mode-slider { display: flex; transition: transform 0.5s ease-in-out; }
+        .mode-slide {
+            min-width: 100%; padding: 1rem;
         }
-
-        .control-button {
-            background: var(--card-bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-size: 1.5em;
-            color: var(--text-color);
+        .mode-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .mode-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .mode-description { font-size: 0.9rem; opacity: 0.7; height: 40px; }
+        .slider-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.1); border: none; border-radius: 50%;
+            width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; color: white;
         }
+        .slider-nav#prev-mode { left: -15px; }
+        .slider-nav#next-mode { right: -15px; }
+
+        /* Baaki saara CSS code waisa hi rahega... */
+        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 1.5rem; font-size: 1.2rem; font-weight: 600; }
+        .score { transition: transform 0.3s ease; } .score.updated { transform: scale(1.25); }
+        .score-x { color: var(--x-color); } .score-o { color: var(--o-color); }
+        .status { font-size: 1.5rem; font-weight: 600; height: 40px; margin-bottom: 1.5rem; transition: color 0.5s, text-shadow 0.5s; }
+        .status.player-x { color: var(--x-color); text-shadow: var(--glow-x); }
+        .status.player-o { color: var(--o-color); text-shadow: var(--glow-o); }
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; transition: opacity 0.5s ease-in-out; }
+        .cell { aspect-ratio: 1 / 1; background-color: var(--bg-color); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: clamp(2rem, 12vw, 4rem); font-weight: 700; cursor: pointer; transition: background-color 0.3s, transform 0.2s; }
+        .cell:hover { background-color: var(--border-color); transform: scale(1.05); }
+        .cell.x { color: var(--x-color); text-shadow: var(--glow-x); }
+        .cell.o { color: var(--o-color); text-shadow: var(--glow-o); }
+        .cell.win { background-color: var(--x-color); } .cell.win.o { background-color: var(--o-color); }
+        .button { padding: 12px 25px; border-radius: 10px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; color: white; }
+        .primary-btn { background-color: var(--x-color); } .secondary-btn { background-color: var(--o-color); }
+        .end-game-screen { display: none; margin-top: 1.5rem; }
+        .end-game-screen .button { margin: 0 10px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card-color); padding: 2rem; border-radius: 15px; width: 90%; max-width: 350px; border: 1px solid var(--border-color); text-align: center; }
+        .modal-content h2 { margin-top: 0; }
+        .win-animation-content img { max-width: 100%; border-radius: 10px; margin-bottom: 1rem; }
+        .settings-icon { position: fixed; top: 20px; right: 20px; font-size: 2rem; cursor: pointer; z-index: 1001; transition: transform 0.3s, opacity 0.5s; }
+        .settings-icon:hover { transform: rotate(90deg); }
+        .setting { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .setting label { font-size: 1.1rem; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-color); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--x-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+        footer { margin-top: 2rem; font-weight: 600; opacity: 0.7; transition: opacity 0.5s; }
     </style>
 </head>
 <body>
 
-    <!-- Controls -->
-    <div class="controls">
-        <div class="control-button" id="theme-switcher">☀️</div>
-        <div class="control-button" id="music-toggle">🎵</div>
+    <div class="pre-loader" id="ad-loader">
+        <div class="ad-space">
+            <!-- ========================================================= -->
+            <!-- ========== AAPKI AD KA SCRIPT YAHAN DAAL DIYA GAYA HAI ========== -->
+            <script type='text/javascript' src='//pl27954922.effectivegatecpm.com/7f/ea/e2/7feae2c70f3e35488693fdcf3e69cb3f.js'></script>
+            <!-- ========================================================= -->
+        </div>
+        <div class="progress-bar">
+            <div class="progress-bar-inner" id="progress-bar-inner"></div>
+        </div>
+        <p class="loading-text">Loading Ad...</p>
     </div>
 
-    <!-- Start Menu -->
-    <div id="start-menu" class="start-menu">
-        <h1>Ultimate Tic-Tac-Toe</h1>
-
-        <!-- ✅ Your Ad Script (shows before game start) -->
-        <script type="text/javascript" src="//pl27954922.effectivegatecpm.com/7f/ea/e2/7feae2c70f3e35488693fdcf3e69cb3f.js"></script>
-
-        <input type="text" id="player1-name" placeholder="Player 1 Name (X)" value="Player 1">
-        <input type="text" id="player2-name" placeholder="Player 2 Name (O)" value="Player 2">
-        <button class="button vs-friend" id="vs-friend-btn">Play vs Friend</button>
-        <button class="button vs-cpu" id="vs-cpu-btn">Play vs Computer</button>
+    <div class="pre-loader hidden" id="splash-screen">
+        <div class="splash-grid">
+            <div class="splash-cell" id="sc0"><span id="splash-x1">X</span></div><div class="splash-cell" id="sc1"><span id="splash-o1">O</span></div><div class="splash-cell" id="sc2"></div>
+            <div class="splash-cell" id="sc3"></div><div class="splash-cell" id="sc4"><span id="splash-x2">X</span></div><div class="splash-cell" id="sc5"><span id="splash-o2">O</span></div>
+            <div class="splash-cell" id="sc6"></div><div class="splash-cell" id="sc7"></div><div class="splash-cell" id="sc8"><span id="splash-x3">X</span></div>
+        </div>
     </div>
 
-    <!-- Game Container -->
-    <div id="game-container" class="game-container hidden">
-        <div class="game-header">
+    <div class="settings-icon hidden" id="settings-icon">⚙️</div>
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content settings-content">
+            <h2>Settings</h2>
+            <div class="setting">
+                <label for="theme-toggle">Neon Theme</label>
+                <div class="toggle-switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></div>
+            </div>
+            <div class="setting">
+                <label for="sound-toggle">Sound</label>
+                <div class="toggle-switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></div>
+            </div>
+            <button class="button primary-btn" id="reset-stats-btn" style="width:100%; margin-top: 1rem;">Reset Stats</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="win-animation-modal">
+        <div class="modal-content win-animation-content">
+             <img src="tictoc.gif" alt="Winner Animation">
+             <h2 id="winner-name-display"></h2>
+             <button class="button secondary-btn" id="close-win-modal-btn">Close</button>
+        </div>
+    </div>
+    
+    <div class="screen-container hidden" id="main-content">
+        <div class="screen" id="start-menu">
+            <h1>Tic Tac Toe</h1>
+            <div class="mode-slider-container">
+                <div class="mode-slider" id="mode-slider">
+                    <div class="mode-slide" data-mode="friend">
+                        <div class="mode-icon">🧑‍🤝‍🧑</div><div class="mode-title">Play vs Friend</div><p class="mode-description">Challenge a friend on the same device.</p>
+                    </div>
+                    <div class="mode-slide" data-mode="cpu-easy">
+                        <div class="mode-icon">💻</div><div class="mode-title">CPU (Easy)</div><p class="mode-description">A friendly match against a computer that makes random moves.</p>
+                    </div>
+                    <div class="mode-slide" data-mode="cpu-hard">
+                        <div class="mode-icon">🤖</div><div class="mode-title">CPU (Hard)</div><p class="mode-description">The ultimate challenge against an unbeatable AI.</p>
+                    </div>
+                    <div class="mode-slide" data-mode="multiplayer">
+                        <div class="mode-icon">🌐</div><div class="mode-title">Multiplayer</div><p class="mode-description">Coming soon! Play online against others.</p>
+                    </div>
+                </div>
+                <button class="slider-nav" id="prev-mode">⟨</button>
+                <button class="slider-nav" id="next-mode">⟩</button>
+            </div>
+            <button class="button primary-btn" id="start-game-btn" style="width: 100%;">Let's Play</button>
+        </div>
+
+        <div class="screen hidden" id="game-container">
             <div class="scoreboard">
-                <div class="score"><span id="p1-name-score">P1</span>: <span id="p1-score">0</span></div>
-                <div class="score">Draw: <span id="draw-score">0</span></div>
-                <div class="score"><span id="p2-name-score">P2</span>: <span id="p2-score">0</span></div>
+                <div class="score score-x"><span id="p1-name-score">Player X</span>: <span id="score-x">0</span></div>
+                <div class="score score-draw">Draw: <span id="score-draw">0</span></div>
+                <div class="score score-o"><span id="p2-name-score">Player O</span>: <span id="score-o">0</span></div>
+            </div>
+            <p class="status" id="status"></p>
+            <div class="board" id="board"></div>
+            <div id="end-game-screen">
+                <button class="button primary-btn" id="play-again-btn">Play Again</button>
+                <button class="button secondary-btn" id="main-menu-btn">Main Menu</button>
             </div>
         </div>
-
-        <div id="status-display" class="status-display">Player X's Turn</div>
-        <div id="board" class="board"></div>
-        <div class="game-footer">
-            <button class="footer-button" id="reset-btn">Reset Scores</button>
-            <button class="footer-button" id="new-game-btn">New Game</button>
-        </div>
     </div>
 
-    <!-- Main Game Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // your original JS logic remains unchanged here
-        });
-    </script>
+    <footer class="hidden" id="footer">Made with ❤️ by Aryan Chaudhary.</footer>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const screens = { ad: document.getElementById('ad-loader'), splash: document.getElementById('splash-screen'), start: document.getElementById('start-menu'), game: document.getElementById('game-container'), };
+        const mainContent = document.getElementById('main-content');
+        const footer = document.getElementById('footer');
+        const board = document.getElementById('board');
+        const statusEl = document.getElementById('status');
+        const scoreDisplays = { x: document.getElementById('score-x'), o: document.getElementById('score-o'), draw: document.getElementById('score-draw'), p1Name: document.getElementById('p1-name-score'), p2Name: document.getElementById('p2-name-score') };
+        const endGameScreen = document.getElementById('end-game-screen');
+        const buttons = { playAgain: document.getElementById('play-again-btn'), mainMenu: document.getElementById('main-menu-btn'), start: document.getElementById('start-game-btn'), closeWinModal: document.getElementById('close-win-modal-btn') };
+        const settings = { icon: document.getElementById('settings-icon'), modal: document.getElementById('settings-modal'), theme: document.getElementById('theme-toggle'), sound: document.getElementById('sound-toggle'), reset: document.getElementById('reset-stats-btn') };
+        const winAnimation = { modal: document.getElementById('win-animation-modal'), winnerName: document.getElementById('winner-name-display') };
+        const modeSlider = document.getElementById('mode-slider');
+        const slides = document.querySelectorAll('.mode-slide');
+        const prevBtn = document.getElementById('prev-mode');
+        const nextBtn = document.getElementById('next-mode');
+        let currentSlide = 0;
+
+        let currentPlayer, gameState, gameActive, gameMode, aiDifficulty;
+        let scores = { X: 0, O: 0, Draw: 0 };
+        let isSoundOn = true;
+        let musicStarted = false;
+
+        const winningConditions = [ [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6] ];
+        const sounds = { move: new Audio('click.mp3'), win: new Audio('win.mp3'), draw: new Audio('draw.mp3'), music: new Audio('music.mp3') };
+        sounds.music.loop = true;
+
+        const playSound = (sound) => { if (isSoundOn) { sounds[sound].currentTime = 0; sounds[sound].play().catch(e => {}); } };
+        const controlMusic = () => { if (isSoundOn) { if (!musicStarted) sounds.music.play().then(() => musicStarted = true).catch(e => {}); else sounds.music.play().catch(e => {}); } else { sounds.music.pause(); } };
+        const switchScreen = (screenName) => {
+             Object.values(screens).forEach(s => s.classList.add('hidden'));
+             if (screenName === 'start' || screenName === 'game') {
+                 mainContent.classList.remove('hidden');
+                 if(screens[screenName]) screens[screenName].classList.remove('hidden');
+             } else if (screens[screenName]) {
+                 screens[screenName].classList.remove('hidden');
+             }
+        };
+        
+        const initializeGame = () => {
+            const mode = slides[currentSlide].dataset.mode;
+            if (mode === 'multiplayer') { alert("Online Multiplayer is coming soon! Our team is working hard on it."); return; }
+            
+            gameMode = mode.startsWith('cpu') ? 'cpu' : mode;
+            aiDifficulty = mode === 'cpu-easy' ? 'easy' : 'hard';
+            const player1Name = 'Player X';
+            const player2Name = gameMode === 'cpu' ? `CPU (${aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)})` : 'Player O';
+            scoreDisplays.p1Name.textContent = player1Name; scoreDisplays.p2Name.textContent = player2Name;
+            switchScreen('game');
+            startNewRound();
+        };
+
+        const startNewRound = () => {
+            gameActive = true; currentPlayer = 'X'; gameState = Array(9).fill('');
+            endGameScreen.style.display = 'none'; board.style.opacity = '0';
+            board.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div'); cell.classList.add('cell'); cell.dataset.index = i;
+                cell.addEventListener('click', handleCellClick); board.appendChild(cell);
+            }
+            setTimeout(() => board.style.opacity = '1', 100);
+            updateStatus();
+        };
+
+        const handleCellClick = (e) => {
+            if (!musicStarted && isSoundOn) controlMusic();
+            const clickedCellIndex = parseInt(e.target.dataset.index);
+            if (gameState[clickedCellIndex] !== '' || !gameActive) return;
+            makeMove(clickedCellIndex);
+            if (gameMode === 'cpu' && gameActive && currentPlayer === 'O') { setTimeout(cpuMove, 500); }
+        };
+
+        const makeMove = (index) => {
+            gameState[index] = currentPlayer; board.children[index].textContent = currentPlayer;
+            board.children[index].classList.add(currentPlayer.toLowerCase()); playSound('move'); checkResult();
+        };
+
+        const checkResult = () => {
+            let roundWon = false; let winningCombination;
+            for (const condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+                    roundWon = true; winningCombination = condition; break;
+                }
+            }
+            if (roundWon) { endGame(false, winningCombination); return; }
+            if (!gameState.includes('')) { endGame(true); return; }
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatus();
+        };
+
+        const endGame = (isDraw, winningCombination) => {
+            gameActive = false;
+            if (isDraw) {
+                statusEl.textContent = "It's a Draw!"; statusEl.className = 'status';
+                scores.Draw++; playSound('draw');
+            } else {
+                const winnerName = currentPlayer === 'X' ? scoreDisplays.p1Name.textContent : scoreDisplays.p2Name.textContent;
+                statusEl.textContent = `${winnerName} Wins!`; scores[currentPlayer]++; playSound('win');
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                winningCombination.forEach(index => { board.children[index].classList.add('win', currentPlayer.toLowerCase()); });
+                winAnimation.winnerName.textContent = `${winnerName} Wins!`;
+                winAnimation.modal.style.display = 'flex';
+            }
+            updateScoreboard(); saveState();
+            setTimeout(() => endGameScreen.style.display = 'block', 1000);
+        };
+
+        const cpuMove = () => {
+            const move = aiDifficulty === 'easy' ? getRandomMove() : getBestMove();
+            makeMove(move);
+        };
+        const getRandomMove = () => {
+            const emptyCells = gameState.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
+            return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        };
+        const getBestMove = () => {
+            let bestScore = -Infinity; let move;
+            for (let i = 0; i < 9; i++) {
+                if (gameState[i] === '') {
+                    gameState[i] = 'O';
+                    let score = minimax(gameState, 0, false);
+                    gameState[i] = '';
+                    if (score > bestScore) { bestScore = score; move = i; }
+                }
+            }
+            return move;
+        };
+        const minimax = (board, depth, isMaximizing) => {
+            const scoresMap = { 'O': 10, 'X': -10, 'draw': 0 };
+            const winner = checkWinner(board);
+            if (winner) return scoresMap[winner] - (winner === 'O' ? depth : -depth);
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) { if (board[i] === '') { board[i] = 'O'; bestScore = Math.max(bestScore, minimax(board, depth + 1, false)); board[i] = ''; } }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) { if (board[i] === '') { board[i] = 'X'; bestScore = Math.min(bestScore, minimax(board, depth + 1, true)); board[i] = ''; } }
+                return bestScore;
+            }
+        };
+        const checkWinner = (board) => {
+            for (const condition of winningConditions) { const [a, b, c] = condition; if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a]; }
+            return board.includes('') ? null : 'draw';
+        };
+
+        const updateStatus = () => { statusEl.textContent = `Player ${currentPlayer}'s Turn`; statusEl.className = 'status'; setTimeout(() => statusEl.classList.add(`player-${currentPlayer.toLowerCase()}`), 10); };
+        const updateScoreboard = () => {
+            scoreDisplays.x.textContent = scores.X; scoreDisplays.o.textContent = scores.O; scoreDisplays.draw.textContent = scores.Draw;
+            if (!gameActive) {
+                const winner = checkWinner(gameState);
+                const scoreClass = winner === 'X' ? '.score-x' : winner === 'O' ? '.score-o' : '.score-draw';
+                const scoreEl = document.querySelector(scoreClass);
+                if(scoreEl) { scoreEl.classList.add('updated'); setTimeout(() => scoreEl.classList.remove('updated'), 500); }
+            }
+        };
+        const saveState = () => { localStorage.setItem('ticTacToeState', JSON.stringify({ scores, theme: document.documentElement.getAttribute('data-theme'), sound: isSoundOn })); };
+        const loadState = () => {
+            const state = JSON.parse(localStorage.getItem('ticTacToeState'));
+            if (state) {
+                scores = state.scores || { X: 0, O: 0, Draw: 0 };
+                const theme = state.theme || 'dark';
+                document.documentElement.setAttribute('data-theme', theme); settings.theme.checked = theme === 'neon';
+                isSoundOn = state.sound !== undefined ? state.sound : true; settings.sound.checked = isSoundOn;
+            }
+            updateScoreboard();
+        };
+        
+        const updateSlider = () => { modeSlider.style.transform = `translateX(-${currentSlide * 100}%)`; };
+        prevBtn.addEventListener('click', () => { currentSlide = (currentSlide > 0) ? currentSlide - 1 : slides.length - 1; updateSlider(); });
+        nextBtn.addEventListener('click', () => { currentSlide = (currentSlide < slides.length - 1) ? currentSlide + 1 : 0; updateSlider(); });
+        buttons.start.addEventListener('click', initializeGame);
+        buttons.playAgain.addEventListener('click', startNewRound);
+        buttons.mainMenu.addEventListener('click', () => switchScreen('start'));
+        settings.icon.addEventListener('click', () => { settings.modal.style.display = 'flex'; });
+        settings.modal.addEventListener('click', (e) => { if (e.target === settings.modal) { settings.modal.style.display = 'none'; } });
+        buttons.closeWinModal.addEventListener('click', () => { winAnimation.modal.style.display = 'none'; });
+        settings.theme.addEventListener('change', () => { document.documentElement.setAttribute('data-theme', settings.theme.checked ? 'neon' : 'dark'); saveState(); });
+        settings.sound.addEventListener('change', () => { isSoundOn = settings.sound.checked; controlMusic(); saveState(); });
+        settings.reset.addEventListener('click', () => { scores = { X: 0, O: 0, Draw: 0 }; updateScoreboard(); saveState(); settings.modal.style.display = 'none'; });
+
+        const init = () => {
+            const progressBar = document.getElementById('progress-bar-inner');
+            setTimeout(() => { progressBar.style.width = '100%'; }, 100);
+            setTimeout(() => {
+                screens.ad.style.opacity = '0';
+                setTimeout(() => {
+                    screens.ad.style.display = 'none';
+                    screens.splash.classList.remove('hidden');
+                }, 500);
+                ['sc0', 'sc4', 'sc8'].forEach(id => document.getElementById(id).classList.add('win-splash'));
+                setTimeout(() => {
+                    screens.splash.style.opacity = '0';
+                    setTimeout(() => {
+                        screens.splash.style.display = 'none';
+                        [mainContent, footer, settings.icon].forEach(el => el.classList.remove('hidden'));
+                        loadState();
+                        switchScreen('start');
+                    }, 500);
+                }, 4000);
+            }, 5000);
+        };
+        init();
+    });
+    </script>
 </body>
 </html>
