@@ -43,13 +43,6 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000;
             opacity: 1; transition: opacity 0.5s ease;
         }
-        .ad-space { /* Your ad container */
-            margin-bottom: 20px;
-            /* Aap ad ke hisaab se iski height/width set kar sakte hain */
-        }
-        .progress-bar { width: 80%; max-width: 300px; height: 5px; background: #333; border-radius: 5px; overflow: hidden; }
-        .progress-bar-inner { width: 0; height: 100%; background: var(--x-color); transition: width 5s linear; }
-        .loading-text { margin-top: 15px; font-size: 1rem; color: #888; }
         
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000;
@@ -131,20 +124,12 @@
 </head>
 <body>
 
-    <div class="pre-loader" id="ad-loader">
-        <div class="ad-space">
-            <!-- ========================================================= -->
-            <!-- ========== AAPKI AD KA SCRIPT YAHAN DAAL DIYA GAYA HAI ========== -->
-            <script type='text/javascript' src='//pl27954922.effectivegatecpm.com/7f/ea/e2/7feae2c70f3e35488693fdcf3e69cb3f.js'></script>
-            <!-- ========================================================= -->
-        </div>
-        <div class="progress-bar">
-            <div class="progress-bar-inner" id="progress-bar-inner"></div>
-        </div>
-        <p class="loading-text">Loading Ad...</p>
-    </div>
+    <!-- ========================================================= -->
+    <!-- ========== AAPKI AD KA SCRIPT YAHAN DAAL DIYA GAYA HAI ========== -->
+    <script type='text/javascript' src='//pl27954922.effectivegatecpm.com/7f/ea/e2/7feae2c70f3e35488693fdcf3e69cb3f.js'></script>
+    <!-- ========================================================= -->
 
-    <div class="pre-loader hidden" id="splash-screen">
+    <div class="pre-loader" id="splash-screen">
         <div class="splash-grid">
             <div class="splash-cell" id="sc0"><span id="splash-x1">X</span></div><div class="splash-cell" id="sc1"><span id="splash-o1">O</span></div><div class="splash-cell" id="sc2"></div>
             <div class="splash-cell" id="sc3"></div><div class="splash-cell" id="sc4"><span id="splash-x2">X</span></div><div class="splash-cell" id="sc5"><span id="splash-o2">O</span></div>
@@ -219,7 +204,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const screens = { ad: document.getElementById('ad-loader'), splash: document.getElementById('splash-screen'), start: document.getElementById('start-menu'), game: document.getElementById('game-container'), };
+        const screens = { splash: document.getElementById('splash-screen'), start: document.getElementById('start-menu'), game: document.getElementById('game-container'), };
         const mainContent = document.getElementById('main-content');
         const footer = document.getElementById('footer');
         const board = document.getElementById('board');
@@ -399,29 +384,23 @@
         settings.reset.addEventListener('click', () => { scores = { X: 0, O: 0, Draw: 0 }; updateScoreboard(); saveState(); settings.modal.style.display = 'none'; });
 
         const init = () => {
-            const progressBar = document.getElementById('progress-bar-inner');
-            setTimeout(() => { progressBar.style.width = '100%'; }, 100);
+            // Start splash screen animation immediately
+            ['sc0', 'sc4', 'sc8'].forEach(id => document.getElementById(id).classList.add('win-splash'));
+            
+            // Set timeout to hide splash screen and show main content
             setTimeout(() => {
-                screens.ad.style.opacity = '0';
+                screens.splash.style.opacity = '0';
                 setTimeout(() => {
-                    screens.ad.style.display = 'none';
-                    screens.splash.classList.remove('hidden');
-                }, 500);
-                ['sc0', 'sc4', 'sc8'].forEach(id => document.getElementById(id).classList.add('win-splash'));
-                setTimeout(() => {
-                    screens.splash.style.opacity = '0';
-                    setTimeout(() => {
-                        screens.splash.style.display = 'none';
-                        [mainContent, footer, settings.icon].forEach(el => el.classList.remove('hidden'));
-                        loadState();
-                        switchScreen('start');
-                    }, 500);
-                }, 4000);
-            }, 5000);
+                    screens.splash.style.display = 'none';
+                    [mainContent, footer, settings.icon].forEach(el => el.classList.remove('hidden'));
+                    loadState();
+                    switchScreen('start');
+                }, 500); // This should match the CSS transition time
+            }, 4000); // Total time for the splash screen animation
         };
         init();
     });
     </script>
+<script type='text/javascript' src='//pl27954922.effectivegatecpm.com/7f/ea/e2/7feae2c70f3e35488693fdcf3e69cb3f.js'></script>
 </body>
 </html>
-<script type='text/javascript' src='//pl27954922.effectivegatecpm.com/7f/ea/e2/7feae2c70f3e35488693fdcf3e69cb3f.js'></script>
